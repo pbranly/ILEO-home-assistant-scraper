@@ -1,0 +1,12 @@
+
+services:
+  ileo-scraper:
+    container_name: ileo-scraper
+    build: .
+    volumes:
+      - ./app:/app
+    env_file:
+      - .env
+
+    environment:
+        - TZ=Europe/Paris
