@@ -1,0 +1,51 @@
+type: vertical-stack
+cards:
+  - type: picture-elements
+    image: /local/image/compteur_eau.jpg
+    title: Compteur Eau
+    elements:
+      - type: state-label
+        entity: input_number.dernier_index_eau
+        style:
+          left: 52%
+          top: 35%
+          color: black
+          font-size: 190%
+  - type: vertical-stack
+    cards:
+      - type: markdown
+        content: >
+          ### Consommation d' eau du  {{
+          states('sensor.date_consommation_eau_jour') }}
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.consommation_eau_jour
+            name: Consommation  jour
+            needle: true
+            min: 0
+            max: 1000
+            unit: L
+            severity:
+              green: 0
+              yellow: 200
+              red: 500
+      - type: entities
+        entities:
+          - type: custom:template-entity-row
+            name: Coût estimé
+            icon: mdi:cash
+            state: >
+              {% set litres = states('sensor.consommation_eau_jour') | float(0)
+              %} {% set euros = (litres / 1000 * 4.4152) %} {{ euros | round(2)
+              }} €
+  - type: statistics-graph
+    title: Consommation Eau - 14 jours glissants
+    chart_type: bar
+    period: day
+    entities:
+      - sensor.index_eau
+    stat_types:
+      - change
+    days_to_show: 14
+    hide_legend: false
