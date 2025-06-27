@@ -1,0 +1,29 @@
+alias: Importer donnée eau (index fixe)
+description: >
+  Met à jour l’index de consommation d’eau à la date reçue et à la date actuelle
+  (pour éviter valeurs négatives), et met à jour les helpers associés.
+triggers:
+  - topic: eau/consommation
+    trigger: mqtt
+actions:
+  - alias: Enregistrer l’index à la date reçue + aujourd’hui
+    data:
+      statistic_id: sensor.index_eau
+      unit_of_measurement: L
+      has_mean: false
+      has_sum: true
+      source: recorder
+      stats:
+        - start: |
+            {{ as_datetime(trigger.payload_json.date)
+               .replace(hour=0, minute=0, second=0, microsecond=0)
+               .astimezone().isoformat() }}
+          sum: "{{ trigger.payload_json.index | int }}"
+    action: recorder.import_statistics
+  - alias: Mettre à jour le helper dernier_index_eau
+    target:
+      entity_id: input_number.dernier_index_eau
+    data:
+      value: "{{ trigger.payload_json.index | float }}"
+    action: input_number.set_value
+mode: single
