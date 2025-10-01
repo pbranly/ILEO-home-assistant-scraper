@@ -30,7 +30,11 @@ MQTT_HOST = os.getenv("MQTT_HOST")
 MQTT_PORT = int(os.getenv("MQTT_PORT") or 1883)
 MQTT_TOPIC_BASE = os.getenv("MQTT_TOPIC_BASE")
 MQTT_RETAIN = os.getenv("MQTT_RETAIN", "true").lower() in ["1", "true", "yes"]
-FORCE_START_DATE = os.getenv("FORCE_START_DATE")          # ex : "2025-05-01"
+FORCE_START_DATE = os.getenv("FORCE_START_DATE")          # ex : "2025-05-01"
+
+# ➕ Ajout : identifiants MQTT
+MQTT_USERNAME = os.getenv("MQTT_USERNAME")
+MQTT_PASSWORD = os.getenv("MQTT_PASSWORD")
 
 if not LOGIN or not PASSWORD:
     raise ValueError("❌ LOGIN ou PASSWORD manquant dans .env")
@@ -51,7 +55,7 @@ SELENIUM_WAIT_TIMEOUT = 15
 DOWNLOAD_TIMEOUT_SEC  = 60
 MQTT_CONNECT_TIMEOUT  = 10
 
-# --- Calcul des dates (de mars 2025 au mois courant) ---
+# --- Calcul des dates (de mars 2025 au mois courant) ---
 logging.info("📅 Calcul des dates de la période de consommation…")
 today = date.today()
 date_debut_str = date(2025, 3, 1).strftime("%d/%m/%Y")
@@ -118,7 +122,7 @@ try:
             except OSError:
                 pass
 
-    logging.info("🔗 URL de téléchargement : %s", download_csv_url)
+    logging.info("🔗 URL de téléchargement : %s", download_csv_url)
     logging.info("⬇️ Téléchargement du CSV de consommation…")
     driver.get(download_csv_url)
     start = time.time()
@@ -168,15 +172,15 @@ if os.path.exists(INTERMEDIATE_FILE_PATH):
                 l = row.get("consommation (litres)")
                 i = row.get("index")
                 if not d or not l or not i:
-                    logging.info(f"Ligne ignorée, données manquantes : {row}")
+                    logging.info(f"Ligne ignorée, données manquantes : {row}")
                     continue
                 if l.strip() == "0":
-                    logging.info(f"Ligne ignorée, consommation nulle : {row}")
+                    logging.info(f"Ligne ignorée, consommation nulle : {row}")
                     continue
                 writer.writerow([d, l.strip(), i.strip()])
         logging.info("✅ Fichier filtré.")
     except Exception as e:
-        logging.error(f"❌ Erreur pendant le filtrage : {e}")
+        logging.error(f"❌ Erreur pendant le filtrage : {e}")
         FILTERED_FILE_PATH = None
 else:
     FILTERED_FILE_PATH = None
@@ -188,7 +192,7 @@ def load_last_sent():
             with open(CACHE_FILE_PATH, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
-            logging.warning(f"Erreur lecture fichier cache : {e}")
+            logging.warning(f"Erreur lecture fichier cache : {e}")
     return None
 
 def save_last_sent(data):
@@ -196,7 +200,7 @@ def save_last_sent(data):
         with open(CACHE_FILE_PATH, "w", encoding="utf-8") as f:
             json.dump(data, f)
     except Exception as e:
-        logging.warning(f"Erreur sauvegarde fichier cache : {e}")
+        logging.warning(f"Erreur sauvegarde fichier cache : {e}")
 
 # --- Traitement final & MQTT ---
 if FILTERED_FILE_PATH and os.path.exists(FILTERED_FILE_PATH):
@@ -239,6 +243,11 @@ if FILTERED_FILE_PATH and os.path.exists(FILTERED_FILE_PATH):
     else:
         logging.info(f"📡 Envoi de {len(to_send)} lignes via MQTT…")
         client = mqtt.Client(protocol=mqtt.MQTTv5)
+
+        # ➕ Ajout de l’authentification MQTT si définie
+        if MQTT_USERNAME and MQTT_PASSWORD:
+            client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
+
         evt = threading.Event()
 
         def on_connect(c, u, flags, rc, props=None):
