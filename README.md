@@ -56,6 +56,7 @@ MQTT_RETAIN=true
 3. **Lancer le conteneur**
 
 ```bash
+docker compose up —build
 docker compose up -d
 ```
 
@@ -100,13 +101,6 @@ Ajoutez cette ligne pour exécuter le scraper 6 fois par jour (00h, 04h, 08h, 12
 
 ## Utilisation
 
-### Entités créées dans Home Assistant
-
-Le scraper crée les entités suivantes :
-
-- `sensor.ileo_prochaine_collecte` : Date de la prochaine collecte
-- `sensor.ileo_type_collecte` : Type de déchets à sortir
-- `sensor.ileo_dernier_update` : Horodatage de la dernière mise à jour
 
 ### Exemple d'automatisation
 
