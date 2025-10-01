@@ -39,7 +39,7 @@ cd ILEO-home-assistant-scraper
 
 2. **Configurer les variables d'environnement**
 
-Créez un fichier `.env` à la racine du projet :
+Modifiez le fichier `.env` à la racine du projet :
 
 ```env
 LOGIN=ileomail.fr
