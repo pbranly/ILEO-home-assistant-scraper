@@ -54,9 +54,12 @@ MQTT_RETAIN=true
 ```
 
 3. **Lancer le conteneur**
-
+premiere installation:
 ```bash
 docker compose up —build
+```
+puis:
+```bash
 docker compose up -d
 ```
 
@@ -94,7 +97,7 @@ crontab -e
 Ajoutez cette ligne pour exécuter le scraper 6 fois par jour (00h, 04h, 08h, 12h, 16h, 20h) :
 
 ```bash
-0 0,4,8,12,16,20 * * * docker compose -f /home/docker/docker_ileo/docker-compose.yml run --rm ileo-scraper
+0 0,4,8,12,16,20 * * * docker compose -f /home/docker/docker_ileo/docker-compose.yml run --rm ileo-scraper python /app/main.py >> /var/log/ileo.log 2>&1
 ```
 
 > **Note** : Adaptez le chemin `/home/docker/docker_ileo/` selon l'emplacement de votre installation.
