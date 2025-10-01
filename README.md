@@ -42,10 +42,15 @@ cd ILEO-home-assistant-scraper
 Créez un fichier `.env` à la racine du projet :
 
 ```env
-ILEO_USERNAME=votre_email@exemple.com
-ILEO_PASSWORD=votre_mot_de_passe
-HA_URL=http://homeassistant.local:8123
-HA_TOKEN=votre_token_home_assistant
+LOGIN=ileomail.fr
+PASSWORD= "ileopassword"
+MQTT_HOST=192.168.x.y
+MQTT_PORT=1883
+MQTT_TOPIC_BASE=eau/consommation
+
+FORCE_RESET_CACHE=false
+
+MQTT_RETAIN=true
 ```
 
 3. **Lancer le conteneur**
@@ -58,18 +63,21 @@ docker compose up -d
 
 ### Docker Compose
 
-Exemple de fichier `docker-compose.yml` :
+fichier `docker-compose.yml` :
 
 ```yaml
-version: '3.8'
 
 services:
   ileo-scraper:
-    build: .
     container_name: ileo-scraper
+    build: .
+    volumes:
+      - ./app:/app
     env_file:
       - .env
-    restart: no
+
+    environment:
+        - TZ=Europe/Paris
 ```
 
 ### Planification automatique
@@ -102,30 +110,93 @@ Le scraper crée les entités suivantes :
 
 ### Exemple d'automatisation
 
-```yaml
-automation:
-  - alias: "Notification collecte déchets"
-    trigger:
-      - platform: state
-        entity_id: sensor.ileo_prochaine_collecte
-    condition:
-      - condition: template
-        value_template: "{{ (as_timestamp(states('sensor.ileo_prochaine_collecte')) - as_timestamp(now())) < 86400 }}"
-    action:
-      - service: notify.mobile_app
-        data:
-          title: "Rappel collecte des déchets"
-          message: "La collecte est prévue demain : {{ states('sensor.ileo_type_collecte') }}"
+```
+alias: Importer donnée eau (index fixe)
+description: >
+  Met à jour l’index de consommation d’eau à la date reçue et à la date actuelle
+  (pour éviter valeurs négatives), et met à jour les helpers associés.
+triggers:
+  - topic: eau/consommation
+    trigger: mqtt
+actions:
+  - alias: Enregistrer l’index à la date reçue + aujourd’hui
+    data:
+      statistic_id: sensor.index_eau
+      unit_of_measurement: L
+      has_mean: false
+      has_sum: true
+      source: recorder
+      stats:
+        - start: |
+            {{ as_datetime(trigger.payload_json.date)
+               .replace(hour=0, minute=0, second=0, microsecond=0)
+               .astimezone().isoformat() }}
+          sum: "{{ trigger.payload_json.index | int }}"
+    action: recorder.import_statistics
+  - alias: Mettre à jour le helper dernier_index_eau
+    target:
+      entity_id: input_number.dernier_index_eau
+    data:
+      value: "{{ trigger.payload_json.index | float }}"
+    action: input_number.set_value
+mode: single
 ```
 
 ### Exemple de carte Lovelace
 
-```yaml
-type: entities
-title: Collecte des déchets
-entities:
-  - entity: sensor.ileo_prochaine_collecte
-  - entity: sensor.ileo_type_collecte
+```
+type: vertical-stack
+cards:
+  - type: picture-elements
+    image: /local/image/compteur_eau.jpg
+    title: Compteur Eau
+    elements:
+      - type: state-label
+        entity: input_number.dernier_index_eau
+        style:
+          left: 52%
+          top: 35%
+          color: black
+          font-size: 190%
+  - type: vertical-stack
+    cards:
+      - type: markdown
+        content: >
+          ### Consommation d' eau du  {{
+          states('sensor.date_consommation_eau_jour') }}
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.consommation_eau_jour
+            name: Consommation  jour
+            needle: true
+            min: 0
+            max: 1000
+            unit: L
+            severity:
+              green: 0
+              yellow: 200
+              red: 500
+      - type: entities
+        entities:
+          - type: custom:template-entity-row
+            name: Coût estimé
+            icon: mdi:cash
+            state: >
+              {% set litres = states('sensor.consommation_eau_jour') | float(0)
+              %} {% set euros = (litres / 1000 * 4.4152) %} {{ euros | round(2)
+              }} €
+  - type: statistics-graph
+    title: Consommation Eau - 14 jours glissants
+    chart_type: bar
+    period: day
+    entities:
+      - sensor.index_eau
+    stat_types:
+      - change
+    days_to_show: 14
+    hide_legend: false
+
 ```
 
 ## Dépannage
@@ -142,9 +213,8 @@ systemctl status docker
 
 ### Les données ne s'affichent pas dans Home Assistant
 
-1. Vérifiez que le token Home Assistant est valide
-2. Vérifiez l'URL de Home Assistant dans le fichier `.env`
-3. Consultez les logs de Home Assistant
+1. Vérifiez l'URL de Home Assistant dans le fichier `.env`
+2. Consultez les logs de Home Assistant
 
 ### La tâche cron ne s'exécute pas
 
