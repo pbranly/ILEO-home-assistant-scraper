@@ -42,15 +42,24 @@ cd ILEO-home-assistant-scraper
 Modifiez le fichier `.env` à la racine du projet :
 
 ```env
-LOGIN=ileomail.fr
-PASSWORD= "ileopassword"
-MQTT_HOST=192.168.x.y
+# --- Identifiants site web mel-ileo ---
+LOGIN=ton_email@example.com
+PASSWORD="ton_mot_de_passe"
+
+# --- Configuration MQTT ---
+MQTT_HOST=192.168.x.yy
 MQTT_PORT=1883
 MQTT_TOPIC_BASE=eau/consommation
+MQTT_RETAIN=true
+
+# ➕ Identifiants MQTT
+MQTT_USERNAME=mon_user
+MQTT_PASSWORD=mon_pass
+
+# --- Optionnel : forcer une date de départ
+# FORCE_START_DATE=2025-05-01
 
 FORCE_RESET_CACHE=false
-
-MQTT_RETAIN=true
 ```
 
 3. **Lancer le conteneur**
