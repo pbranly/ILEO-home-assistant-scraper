@@ -65,7 +65,7 @@ FORCE_RESET_CACHE=false
 3. **Lancer le conteneur**
 premiere installation:
 ```bash
-docker compose up —build
+docker compose up --build
 ```
 puis:
 ```bash
