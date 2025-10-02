@@ -8,7 +8,7 @@ Un scraper Docker pour intégrer automatiquement les données ILEO dans Home Ass
 
 ## Description
 
-Ce projet permet de récupérer automatiquement les informations de votre compte ILEO (collecte des déchets, calendrier de ramassage, etc.) et de les rendre disponibles dans Home Assistant pour créer des automatisations et notifications.
+Ce projet permet de récupérer automatiquement les informations de votre compte ILEO et de les rendre disponibles dans Home Assistant pour afficher l'historique des consommations d'eau.
 
 ## Table des matières
 
