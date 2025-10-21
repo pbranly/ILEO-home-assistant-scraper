@@ -241,8 +241,8 @@ if FILTERED_FILE_PATH and os.path.exists(FILTERED_FILE_PATH):
     if not to_send:
         logging.info("🔁 Aucune nouvelle donnée à envoyer.")
     else:
-        # 🔢 Ne garder que les 10 derniers relevés
-        to_send = sorted(to_send, key=lambda x: x["date"])[-10:]
+        # 🔢 Ne garder que les 30 derniers relevés
+        to_send = sorted(to_send, key=lambda x: x["date"])[-30:]
 
         # 📦 Construction du JSON complet
         payload = {
