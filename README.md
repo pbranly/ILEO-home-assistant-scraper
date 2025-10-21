@@ -117,33 +117,36 @@ Ajoutez cette ligne pour exécuter le scraper 6 fois par jour (00h, 04h, 08h, 12
 ### Exemple d'automatisation
 
 ```
-alias: Importer donnée eau (index fixe)
-description: >
-  Met à jour l’index de consommation d’eau à la date reçue et à la date actuelle
-  (pour éviter valeurs négatives), et met à jour les helpers associés.
+alias: Importer données eau (30 derniers relevés)
+description: |
+  Met à jour l’index de consommation d’eau pour les 30 dernières mesures reçues.
 triggers:
   - topic: eau/consommation
     trigger: mqtt
 actions:
-  - alias: Enregistrer l’index à la date reçue + aujourd’hui
+  - alias: Enregistrer les index reçus
+    action: recorder.import_statistics
     data:
       statistic_id: sensor.index_eau
       unit_of_measurement: L
       has_mean: false
       has_sum: true
       source: recorder
-      stats:
-        - start: |
-            {{ as_datetime(trigger.payload_json.date)
-               .replace(hour=0, minute=0, second=0, microsecond=0)
-               .astimezone().isoformat() }}
-          sum: "{{ trigger.payload_json.index | int }}"
-    action: recorder.import_statistics
+      stats: >
+        {% set liste = trigger.payload_json.releves[:30] %} [ {% for item in
+        liste %}
+          {
+            "start": "{{ as_datetime(item.date)
+                        .replace(hour=0, minute=0, second=0, microsecond=0)
+                        .astimezone().isoformat() }}",
+            "sum": {{ item.index | int }}
+          }{{ "," if not loop.last else "" }}
+        {% endfor %} ]
   - alias: Mettre à jour le helper dernier_index_eau
     target:
       entity_id: input_number.dernier_index_eau
     data:
-      value: "{{ trigger.payload_json.index | float }}"
+      value: "{{ trigger.payload_json.releves[-1].index | float }}"
     action: input_number.set_value
 mode: single
 ```
