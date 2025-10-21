@@ -1,0 +1,32 @@
+alias: Importer données eau (10 derniers relevés)
+description: |
+  Met à jour l’index de consommation d’eau pour les 10 dernières mesures reçues.
+triggers:
+  - topic: eau/consommation
+    trigger: mqtt
+actions:
+  - alias: Enregistrer les index reçus
+    action: recorder.import_statistics
+    data:
+      statistic_id: sensor.index_eau
+      unit_of_measurement: L
+      has_mean: false
+      has_sum: true
+      source: recorder
+      stats: >
+        {% set liste = trigger.payload_json.releves[:10] %} [ {% for item in
+        liste %}
+          {
+            "start": "{{ as_datetime(item.date)
+                        .replace(hour=0, minute=0, second=0, microsecond=0)
+                        .astimezone().isoformat() }}",
+            "sum": {{ item.index | int }}
+          }{{ "," if not loop.last else "" }}
+        {% endfor %} ]
+  - alias: Mettre à jour le helper dernier_index_eau
+    target:
+      entity_id: input_number.dernier_index_eau
+    data:
+      value: "{{ trigger.payload_json.releves[-1].index | float }}"
+    action: input_number.set_value
+mode: single
