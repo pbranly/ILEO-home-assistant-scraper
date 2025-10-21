@@ -1,0 +1,25 @@
+- name: "Consommation Eau jour"
+  unique_id: "consommation_eau_jour"
+  state_topic: "eau/consommation"
+  value_template: >
+    {% set releves = value_json.releves %}
+    {% if releves and releves | count > 0 %}
+      {{ releves[-1].litres | float | round(0) | int }}
+    {% else %}
+      0
+    {% endif %}
+  unit_of_measurement: "L"
+  device_class: water
+  state_class: measurement
+
+- name: "Date Consommation Eau jour"
+  unique_id: "date_consommation_eau_jour"
+  state_topic: "eau/consommation"
+  value_template: >
+    {% set releves = value_json.releves %}
+    {% if releves and releves | count > 0 %}
+      {{ as_datetime(releves[-1].date).strftime('%d/%m/%Y') }}
+    {% else %}
+      inconnu
+    {% endif %}
+  icon: mdi:calendar
