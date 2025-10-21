@@ -1,6 +1,6 @@
-alias: Importer données eau (10 derniers relevés)
+alias: Importer données eau (30 derniers relevés)
 description: |
-  Met à jour l’index de consommation d’eau pour les 10 dernières mesures reçues.
+  Met à jour l’index de consommation d’eau pour les 30 dernières mesures reçues.
 triggers:
   - topic: eau/consommation
     trigger: mqtt
@@ -14,7 +14,7 @@ actions:
       has_sum: true
       source: recorder
       stats: >
-        {% set liste = trigger.payload_json.releves[:10] %} [ {% for item in
+        {% set liste = trigger.payload_json.releves[:30] %} [ {% for item in
         liste %}
           {
             "start": "{{ as_datetime(item.date)
